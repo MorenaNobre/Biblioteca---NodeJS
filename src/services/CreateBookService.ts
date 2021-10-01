@@ -1,25 +1,41 @@
 import { getCustomRepository } from "typeorm";
 import { BooksRepositories } from "../repositories/BooksRepositories";
 
-interface IRequestBook {
+interface IUseRequest {
   title: string;
   genre: string;
   description: string;
-  borrowed?: boolean;
+  borrowed: boolean;
 }
 
 class CreateBookService {
-  async execute({ title, genre, description, borrowed }: IRequestBook) {
+  async execute({ title, genre, description, borrowed }: IUseRequest) {
     const booksRepositories = getCustomRepository(BooksRepositories);
 
     if (!title) {
-      throw new Error("This Title does not exists");
+      throw new Error("Title does not exists.");
     }
 
-    const bookAlreadyExists = await booksRepositories.findOne({ title });
-  }
+    //SELECT * FROM BOOKS WHERE NAME = 'title'
+    const bookAlreadyExists = await booksRepositories.findOne({
+      title,
+    });
 
-  
+    if (bookAlreadyExists) {
+      throw new Error("Book already exists!");
+    }
+
+    const book = booksRepositories.create({
+      title,
+      genre,
+      description,
+      borrowed,
+    });
+
+    await booksRepositories.save(book);
+
+    return book;
+  }
 }
 
 export { CreateBookService };
